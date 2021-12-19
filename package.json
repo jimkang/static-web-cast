@@ -1,0 +1,28 @@
+{
+  "name": "static-web-cast",
+  "version": "1.0.1",
+  "description": "A tool that goes through your static-web-archive entries, finds ones with audio in them, then creates a podcast feed from them.",
+  "main": "static-web-cast.js",
+  "bin": {
+    "swpick": "./static-web-cast.js"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jimkang/static-web-cast.git"
+  },
+  "keywords": [],
+  "author": "Jim Kang",
+  "license": "Polyform Noncommercial License 1.0",
+  "bugs": {
+    "url": "https://github.com/jimkang/static-web-cast/issues"
+  },
+  "homepage": "https://github.com/jimkang/static-web-cast",
+  "devDependencies": {
+    "eslint": "^7.24.0"
+  },
+  "dependencies": {
+    "d3-queue": "^3.0.7",
+    "oknok": "^3.0.0"
+  }
+}
