@@ -7,5 +7,7 @@ module.exports = {
   language: 'en',
   owner: 'Smidgeo',
   email: 'smidgeo@fastmail.com',
-  category: 'Education'
+  category: 'Education',
+  subcategory: 'Self-Improvement',
+  explicit: 'No'
 };

@@ -67,10 +67,16 @@ function makePodcastXML(entries) {
       {'googleplay:block': 'yes'},
       {image: { url: config.podcastImageURL }},
       {language: config.language},
+      {'itunes:image': { _attr: { href: config.podcastImageURL }}},
       {'itunes:owner': [
         { 'itunes:name': config.owner },
         { 'itunes:email': config.email }
-      ]}
+      ]},
+      {'itunes:category': [
+        { _attr: { text: config.category }} ,
+        {'itunes:category': { _attr: { text: config.subcategory } } }
+      ]},
+      {'itunes:explicit': config.explicit }
     ] 
   };
   var feed = new RSS(rssFeedOpts);
