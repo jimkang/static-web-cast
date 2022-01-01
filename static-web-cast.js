@@ -57,8 +57,8 @@ function makePodcastXML(entries) {
   // TODO: Put this in the config.
   var rssFeedOpts = {
     feed_url: `${config.baseURL}/${config.rssFilename}`,
-    site_url: `${config.baseURL}/`,
-    link: `${config.baseURL}`,
+    site_url: config.baseURL,
+    link: config.baseURL,
     custom_namespaces: {
       'itunes': 'http://www.itunes.com/dtds/podcast-1.0.dtd',
       'googleplay': 'http://www.google.com/schemas/play-podcasts/1.0'
@@ -66,6 +66,7 @@ function makePodcastXML(entries) {
     custom_elements: [
       {'googleplay:block': 'yes'},
       {image: { url: config.podcastImageURL }},
+      {language: config.language}
     ] 
   };
   var feed = new RSS(rssFeedOpts);
