@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-/* global process */
+/* global process, __dirname */
 
 var fs = require('fs');
 var path = require('path');
@@ -11,15 +11,18 @@ var RSS = require('rss');
 
 if (process.argv.length < 2) {
   console.error(
-    'Usage: node static-web-cast <directory with meta files> > podcast.xml'
+    'Usage: node static-web-cast <config path> > podcast.xml'
   );
   process.exit(1);
 }
 
-const metaDir = process.argv[2];
+const configPath = process.argv[2];
+
+var config = require(path.join(__dirname, configPath));
+const metaDir = config.metaFilesLocation;
 
 var metaFiles = fs.readdirSync(metaDir).filter(isAnEntryMetaFile);
-console.error('metaFiles', metaFiles);
+//console.error('metaFiles', metaFiles);
 var q = queue();
 metaFiles.forEach(metaFile => q.defer(getAudioEntry, metaFile));
 q.awaitAll(oknok({ ok: makePodcastXML, nok: logError }));
@@ -31,9 +34,6 @@ function logError(error) {
 function isAnEntryMetaFile(s) {
   return s.includes('-') && s.endsWith('.json');
 }
-
-// TODO: Get from config
-const archiveBaseURL = 'https://smidgeo.com/notes/deathmtn';
 
 async function getAudioEntry(metaFile, done) {
   try {
@@ -56,18 +56,16 @@ function makePodcastXML(entries) {
   //console.error(entriesWithAudio);
   // TODO: Put this in the config.
   var rssFeedOpts = {
-    feed_url: 'https://smidgeo.com/notes/deathmtn/rss/podcast.rss',
-    site_url: 'https://smidgeo.com/notes/deathmtn/',
-    link: 'https://smidgeo.com/notes/deathmtn',
+    feed_url: `${config.baseURL}/${config.rssFilename}`,
+    site_url: `${config.baseURL}/`,
+    link: `${config.baseURL}`,
     custom_namespaces: {
       'itunes': 'http://www.itunes.com/dtds/podcast-1.0.dtd',
       'googleplay': 'http://www.google.com/schemas/play-podcasts/1.0'
     },
     custom_elements: [
       {'googleplay:block': 'yes'},
-      {image: {
-        url: 'https://jimkang.com/smallfindings/media/small-findings.jpg'
-      }},
+      {image: { url: config.podcastImageURL }},
     ] 
   };
   var feed = new RSS(rssFeedOpts);
@@ -75,7 +73,7 @@ function makePodcastXML(entries) {
   console.log(feed.xml({ indent: true }));
 
   function addToFeed({ caption, mediaFilename, id, date }) {
-    const postLink = `${archiveBaseURL}/${id}.html`;
+    const postLink = `${config.baseURL}/${id}.html`;
     feed.item({
       title: caption,
       description: caption,
@@ -83,7 +81,7 @@ function makePodcastXML(entries) {
       guid: postLink,
       date,
       enclosure: {
-        url: `${archiveBaseURL}/media/${mediaFilename}`,
+        url: `${config.mediaBaseURL}/${mediaFilename}`,
       },
       custom_elements: [
         { 'itunes:explicit': 'No' },
