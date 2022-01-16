@@ -8,6 +8,10 @@ var oknok = require('oknok');
 var { queue } = require('d3-queue');
 var compact = require('lodash.compact');
 var RSS = require('rss');
+var MediaInfo = require('mediainfo.js');
+var {pipeline} = require('stream');
+var {promisify} = require('util');
+var fetch = require('node-fetch');
 
 if (process.argv.length < 2) {
   console.error(
@@ -20,15 +24,24 @@ const configPath = process.argv[2];
 
 var config = require(path.join(__dirname, configPath));
 const metaDir = config.metaFilesLocation;
+var mediaInfo;
 
-var metaFiles = fs.readdirSync(metaDir).filter(isAnEntryMetaFile);
-//console.error('metaFiles', metaFiles);
-var q = queue();
-metaFiles.forEach(metaFile => q.defer(getAudioEntry, metaFile));
-q.awaitAll(oknok({ ok: makePodcastXML, nok: logError }));
+((async function go() {
+  try {
+    mediaInfo = await MediaInfo();
+  } catch (error) {
+    logError(error);
+    process.exit(1);
+  } 
+  var metaFiles = fs.readdirSync(metaDir).filter(isAnEntryMetaFile);
+  //console.error('metaFiles', metaFiles);
+  var q = queue();
+  metaFiles.forEach(metaFile => q.defer(getAudioEntry, metaFile));
+  q.awaitAll(oknok({ ok: makePodcastXML, nok: logError }));
+})());
 
-function logError(error) {
-  console.error(error);
+function logError(error, message = '') {
+  console.error(message, error, error.stack);
 }
 
 function isAnEntryMetaFile(s) {
@@ -79,12 +92,24 @@ function makePodcastXML(entries) {
       {'itunes:explicit': config.explicit }
     ] 
   };
-  var feed = new RSS(rssFeedOpts);
-  entriesWithAudio.forEach(addToFeed);
-  console.log(feed.xml({ indent: true }));
 
-  function addToFeed({ caption, mediaFilename, id, date }) {
+  var feed = new RSS(rssFeedOpts);
+
+  Promise
+    .allSettled(entriesWithAudio.map(addToFeed))
+    .then(() => console.log(feed.xml({ indent: true })))
+    .catch(logError);
+
+  async function addToFeed({ caption, mediaFilename, id, date }) {
+    var duration;
+    try {
+      duration = await getDuration(config.mediaBaseURL, mediaFilename);
+    } catch (error) {
+      logError(error);
+    }
+
     const postLink = `${config.baseURL}/${id}.html`;
+
     feed.item({
       title: caption,
       description: caption,
@@ -96,7 +121,7 @@ function makePodcastXML(entries) {
       },
       custom_elements: [
         { 'itunes:explicit': 'No' },
-        { 'itunes:duration': 1717 },
+        { 'itunes:duration': duration },
         { 'itunes:season': 1 },
         { 'itunes:episode': 24 },
         { 'itunes:episodeType': 'full' }
@@ -104,3 +129,50 @@ function makePodcastXML(entries) {
     });
   }
 }
+
+async function getDuration(baseURL, filename) {
+  const location = `${baseURL}/${filename}`;
+  // TODO if it's ever needed: A version that looks for the file on the local file system.
+  var duration = 0;
+  // TODO: If you're ever going to have non-unique filenames, add a guid. Also, tmp dir config.
+  const tmpPath = `./${filename}`;
+  var wroteFile = false;
+  try {
+    var streamPipeline = promisify(pipeline);
+    var res = await fetch(location);
+    if (!res.ok) { throw new Error(`Unexpected response ${res.statusText}.`); }
+    await streamPipeline(res.body, fs.createWriteStream(tmpPath));
+    wroteFile = true;
+
+    var fileHandle = await fs.promises.open(tmpPath);
+    var stats = await fileHandle.stat(tmpPath);
+    var info = await mediaInfo.analyzeData(() => stats.size, readChunk);
+    duration = info?.media?.track?.[0]?.Duration ?? 0;
+  } catch (error) {
+    logError(error, 'Trouble trying to get a file duration.');
+  } finally {
+    if (fileHandle && wroteFile) {
+      try {
+        // You have to close the file before you can delete it.
+        await fileHandle.close();
+        await fs.promises.unlink(tmpPath);
+      } catch (error) {
+        logError(error, `[Sideshow Bob stepping on rake] Had problems cleaning up file at ${tmpPath}.`); 
+      }
+    }
+  }
+
+  return duration;
+
+  async function readChunk(size, offset) {
+    var buffer = new Uint8Array(size);
+    try {
+      await fileHandle.read(buffer, 0, size, offset);
+      return buffer;
+    } catch (error) {
+      logError(error);
+    }
+    return buffer;
+  }
+}
+

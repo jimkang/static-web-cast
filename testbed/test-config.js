@@ -1,5 +1,6 @@
 module.exports = {
   metaFilesLocation: 'testbed/meta',
+  mediaFilesLocation: 'testbed/media',
   baseURL: 'https://smidgeo.com',
   rssFilename: 'test.xml',
   podcastImageURL: 'https://jimkang.com/smallfindings/media/small-findings.jpg',
