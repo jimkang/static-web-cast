@@ -15,12 +15,21 @@ var fetch = require('node-fetch');
 
 if (process.argv.length < 2) {
   console.error(
-    'Usage: node static-web-cast <config path> > podcast.xml'
+    'Usage: node static-web-cast <config path> [cached file info JSON file path] > podcast.xml'
   );
   process.exit(1);
 }
 
 const configPath = process.argv[2];
+var cachedFileInfoPath;
+
+var cachedFileInfo = {};
+if (process.argv.length > 3) {
+  cachedFileInfoPath = path.join(__dirname, process.argv[3]);
+  if (fs.existsSync(cachedFileInfoPath)) {
+    cachedFileInfo = require(cachedFileInfoPath);
+  }
+}
 
 var config = require(path.join(__dirname, configPath));
 const metaDir = config.metaFilesLocation;
@@ -97,8 +106,15 @@ function makePodcastXML(entries) {
 
   Promise
     .allSettled(entriesWithAudio.map(addToFeed))
-    .then(() => console.log(feed.xml({ indent: true })))
+    .then(doConcludingWrites)
     .catch(logError);
+
+  function doConcludingWrites() {
+    console.log(feed.xml({ indent: true }));
+    if (Object.keys(cachedFileInfo).length > 0) {
+      fs.writeFileSync(cachedFileInfoPath, JSON.stringify(cachedFileInfo, null, 2), { encoding: 'utf8' });
+    }
+  }
 
   async function addToFeed({ caption, mediaFilename, id, date }) {
     var duration, length;
@@ -132,6 +148,10 @@ function makePodcastXML(entries) {
 }
 
 async function getDurationAndLength(baseURL, filename) {
+  if (filename in cachedFileInfo) {
+    return cachedFileInfo[filename];
+  }
+
   const location = `${baseURL}/${filename}`;
   // TODO if it's ever needed: A version that looks for the file on the local file system.
   var duration = 0;
@@ -165,7 +185,8 @@ async function getDurationAndLength(baseURL, filename) {
     }
   }
 
-  return [duration, length];
+  cachedFileInfo[filename] = [duration, length];
+  return cachedFileInfo[filename];
 
   async function readChunk(size, offset) {
     var buffer = new Uint8Array(size);
