@@ -137,7 +137,7 @@ function makePodcastXML(entries) {
       guid: postLink,
       date,
       enclosure: {
-        url: `${config.mediaBaseURL}/${mediaFilename}`,
+        url: `${config.mediaBaseURL}/${encodeURIComponent(mediaFilename)}`,
         size: length
       },
       custom_elements: [
