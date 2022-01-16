@@ -10,5 +10,9 @@ module.exports = {
   email: 'smidgeo@fastmail.com',
   category: 'Education',
   subcategory: 'Self-Improvement',
-  explicit: 'No'
+  explicit: 'No',
+  subtitle: 'The audio posts from deathmtn notes.',
+  summary: 'Sounds — verbal, musical, and otherwise — from everyday life.',
+  author: 'deathmtn',
+  podcastType: 'episodic'
 };

@@ -98,7 +98,11 @@ function makePodcastXML(entries) {
         { _attr: { text: config.category }} ,
         {'itunes:category': { _attr: { text: config.subcategory } } }
       ]},
-      {'itunes:explicit': config.explicit }
+      {'itunes:explicit': config.explicit },
+      {'itunes:subtitle': config.subtitle },
+      {'itunes:summary': config.summary },
+      {'itunes:author': config.author },
+      {'itunes:type': config.podcastType },
     ] 
   };
 
