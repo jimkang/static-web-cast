@@ -101,9 +101,9 @@ function makePodcastXML(entries) {
     .catch(logError);
 
   async function addToFeed({ caption, mediaFilename, id, date }) {
-    var duration;
+    var duration, length;
     try {
-      duration = await getDuration(config.mediaBaseURL, mediaFilename);
+      [ duration, length ] = await getDurationAndLength(config.mediaBaseURL, mediaFilename);
     } catch (error) {
       logError(error);
     }
@@ -118,6 +118,7 @@ function makePodcastXML(entries) {
       date,
       enclosure: {
         url: `${config.mediaBaseURL}/${mediaFilename}`,
+        size: length
       },
       custom_elements: [
         { 'itunes:explicit': 'No' },
@@ -130,10 +131,11 @@ function makePodcastXML(entries) {
   }
 }
 
-async function getDuration(baseURL, filename) {
+async function getDurationAndLength(baseURL, filename) {
   const location = `${baseURL}/${filename}`;
   // TODO if it's ever needed: A version that looks for the file on the local file system.
   var duration = 0;
+  var length = 0;
   // TODO: If you're ever going to have non-unique filenames, add a guid. Also, tmp dir config.
   const tmpPath = `./${filename}`;
   var wroteFile = false;
@@ -146,7 +148,8 @@ async function getDuration(baseURL, filename) {
 
     var fileHandle = await fs.promises.open(tmpPath);
     var stats = await fileHandle.stat(tmpPath);
-    var info = await mediaInfo.analyzeData(() => stats.size, readChunk);
+    length = stats.size;
+    var info = await mediaInfo.analyzeData(() => length, readChunk);
     duration = info?.media?.track?.[0]?.Duration ?? 0;
   } catch (error) {
     logError(error, 'Trouble trying to get a file duration.');
@@ -162,7 +165,7 @@ async function getDuration(baseURL, filename) {
     }
   }
 
-  return duration;
+  return [duration, length];
 
   async function readChunk(size, offset) {
     var buffer = new Uint8Array(size);
