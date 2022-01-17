@@ -12,6 +12,7 @@ var MediaInfo = require('mediainfo.js');
 var {pipeline} = require('stream');
 var {promisify} = require('util');
 var fetch = require('node-fetch');
+var getAtPath = require('get-at-path');
 
 if (process.argv.length < 2) {
   console.error(
@@ -144,7 +145,7 @@ function makePodcastXML(entries) {
         { 'itunes:explicit': 'No' },
         { 'itunes:duration': duration },
         { 'itunes:episodeType': 'full' },
-        {'itunes:author': config.author },
+        { 'itunes:author': config.author },
       ]
     });
   }
@@ -173,7 +174,7 @@ async function getDurationAndLength(baseURL, filename) {
     var stats = await fileHandle.stat(tmpPath);
     length = stats.size;
     var info = await mediaInfo.analyzeData(() => length, readChunk);
-    duration = info?.media?.track?.[0]?.Duration ?? 0;
+    duration = getAtPath(info, ['media', 'track', '0', 'Duration']) || 0;
   } catch (error) {
     logError(error, 'Trouble trying to get a file duration.');
   } finally {
