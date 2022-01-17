@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-/* global process, __dirname */
+/* global process */
 
 var fs = require('fs');
 var path = require('path');
@@ -26,13 +26,13 @@ var cachedFileInfoPath;
 
 var cachedFileInfo = {};
 if (process.argv.length > 3) {
-  cachedFileInfoPath = path.join(__dirname, process.argv[3]);
+  cachedFileInfoPath = process.argv[3];
   if (fs.existsSync(cachedFileInfoPath)) {
     cachedFileInfo = require(cachedFileInfoPath);
   }
 }
 
-var config = require(path.join(__dirname, configPath));
+var config = require(configPath);
 const metaDir = config.metaFilesLocation;
 var mediaInfo;
 
