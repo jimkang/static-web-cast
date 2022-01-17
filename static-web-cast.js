@@ -131,7 +131,7 @@ function makePodcastXML(entries) {
     const postLink = `${config.baseURL}/${id}.html`;
 
     feed.item({
-      title: caption,
+      title: caption.length > 80 ? caption.slice(0, 80) + '…' : caption,
       description: caption,
       link: postLink,
       guid: postLink,
@@ -143,9 +143,8 @@ function makePodcastXML(entries) {
       custom_elements: [
         { 'itunes:explicit': 'No' },
         { 'itunes:duration': duration },
-        { 'itunes:season': 1 },
-        { 'itunes:episode': 24 },
-        { 'itunes:episodeType': 'full' }
+        { 'itunes:episodeType': 'full' },
+        {'itunes:author': config.author },
       ]
     });
   }
