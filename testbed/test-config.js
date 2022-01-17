@@ -14,5 +14,7 @@ module.exports = {
   subtitle: 'The audio posts from deathmtn notes.',
   summary: 'Sounds — verbal, musical, and otherwise — from everyday life.',
   author: 'deathmtn',
-  podcastType: 'episodic'
+  podcastType: 'episodic',
+  title: 'The podcast',
+  description: 'The audio posts from the blog',
 };

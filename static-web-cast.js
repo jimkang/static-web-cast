@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-/* global process */
+/* global process, __dirname */
 
 var fs = require('fs');
 var path = require('path');
@@ -26,13 +26,17 @@ var cachedFileInfoPath;
 
 var cachedFileInfo = {};
 if (process.argv.length > 3) {
+  
   cachedFileInfoPath = process.argv[3];
+  if (!cachedFileInfoPath.startsWith('/')) {
+    cachedFileInfoPath =path.join(__dirname, cachedFileInfoPath);
+  }
   if (fs.existsSync(cachedFileInfoPath)) {
     cachedFileInfo = require(cachedFileInfoPath);
   }
 }
 
-var config = require(configPath);
+var config = require(configPath.startsWith('/') ? configPath : path.join(__dirname, configPath));
 const metaDir = config.metaFilesLocation;
 var mediaInfo;
 
@@ -82,6 +86,8 @@ function makePodcastXML(entries) {
     feed_url: `${config.baseURL}/${config.rssFilename}`,
     site_url: config.baseURL,
     link: config.baseURL,
+    title: config.title,
+    description: config.description,
     custom_namespaces: {
       'itunes': 'http://www.itunes.com/dtds/podcast-1.0.dtd',
       'googleplay': 'http://www.google.com/schemas/play-podcasts/1.0'
