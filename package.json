@@ -1,10 +1,10 @@
 {
   "name": "static-web-cast",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "A tool that goes through your static-web-archive entries, finds ones with audio in them, then creates a podcast feed from them.",
   "main": "static-web-cast.js",
   "bin": {
-    "swpick": "./static-web-cast.js"
+    "swcast": "./static-web-cast.js"
   },
   "scripts": {},
   "repository": {
