@@ -121,6 +121,7 @@ function makePodcastXML(entries) {
     .catch(logError);
 
   function doConcludingWrites() {
+    console.error('Doing the concluding writes.');
     console.log(feed.xml({ indent: true }));
     if (Object.keys(cachedFileInfo).length > 0) {
       fs.writeFileSync(cachedFileInfoPath, JSON.stringify(cachedFileInfo, null, 2), { encoding: 'utf8' });
@@ -128,11 +129,13 @@ function makePodcastXML(entries) {
   }
 
   async function addToFeed({ caption, mediaFilename, id, date }) {
-    var duration, length;
+    var duration = 0;
+    var length = 0;
     try {
       [ duration, length ] = await getDurationAndLength(config.mediaBaseURL, mediaFilename);
     } catch (error) {
       logError(error);
+      console.error('Caught error with getting duration of', mediaFilename);
     }
 
     const postLink = `${config.baseURL}/${id}.html`;
@@ -145,15 +148,16 @@ function makePodcastXML(entries) {
       date,
       enclosure: {
         url: `${config.mediaBaseURL}/${encodeURIComponent(mediaFilename)}`,
-        size: length
+        size: length,
       },
       custom_elements: [
         { 'itunes:explicit': 'No' },
         { 'itunes:duration': duration },
         { 'itunes:episodeType': 'full' },
         { 'itunes:author': config.author },
-      ]
+      ],
     });
+    console.error('Added', mediaFilename, 'to the feed.');
   }
 }
 
@@ -182,7 +186,7 @@ async function getDurationAndLength(baseURL, filename) {
     var info = await mediaInfo.analyzeData(() => length, readChunk);
     duration = getAtPath(info, ['media', 'track', '0', 'Duration']) || 0;
   } catch (error) {
-    logError(error, 'Trouble trying to get a file duration.');
+    logError(error, `Trouble trying to get a file duration for ${tmpPath}`);
   } finally {
     if (fileHandle && wroteFile) {
       try {
