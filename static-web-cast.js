@@ -9,8 +9,8 @@ var { queue } = require('d3-queue');
 var compact = require('lodash.compact');
 var RSS = require('rss');
 var MediaInfo = require('mediainfo.js');
-var {pipeline} = require('stream');
-var {promisify} = require('util');
+var { pipeline } = require('stream');
+var { promisify } = require('util');
 var fetch = require('node-fetch');
 var getAtPath = require('get-at-path');
 
@@ -26,33 +26,34 @@ var cachedFileInfoPath;
 
 var cachedFileInfo = {};
 if (process.argv.length > 3) {
-  
   cachedFileInfoPath = process.argv[3];
   if (!cachedFileInfoPath.startsWith('/')) {
-    cachedFileInfoPath =path.join(__dirname, cachedFileInfoPath);
+    cachedFileInfoPath = path.join(__dirname, cachedFileInfoPath);
   }
   if (fs.existsSync(cachedFileInfoPath)) {
     cachedFileInfo = require(cachedFileInfoPath);
   }
 }
 
-var config = require(configPath.startsWith('/') ? configPath : path.join(__dirname, configPath));
+var config = require(configPath.startsWith('/')
+  ? configPath
+  : path.join(__dirname, configPath));
 const metaDir = config.metaFilesLocation;
 var mediaInfo;
 
-((async function go() {
+(async function go() {
   try {
     mediaInfo = await MediaInfo();
   } catch (error) {
     logError(error);
     process.exit(1);
-  } 
+  }
   var metaFiles = fs.readdirSync(metaDir).filter(isAnEntryMetaFile);
   //console.error('metaFiles', metaFiles);
   var q = queue();
-  metaFiles.forEach(metaFile => q.defer(getAudioEntry, metaFile));
+  metaFiles.forEach((metaFile) => q.defer(getAudioEntry, metaFile));
   q.awaitAll(oknok({ ok: makePodcastXML, nok: logError }));
-})());
+})();
 
 function logError(error, message = '') {
   console.error(message, error, error.stack);
@@ -64,7 +65,9 @@ function isAnEntryMetaFile(s) {
 
 async function getAudioEntry(metaFile, done) {
   try {
-    const metaText = await fs.promises.readFile(path.join(metaDir, metaFile), { encoding: 'utf8' });
+    const metaText = await fs.promises.readFile(path.join(metaDir, metaFile), {
+      encoding: 'utf8',
+    });
     var metaEntry = JSON.parse(metaText);
     if (metaEntry.isAudio) {
       done(null, metaEntry);
@@ -89,34 +92,37 @@ function makePodcastXML(entries) {
     title: config.title,
     description: config.description,
     custom_namespaces: {
-      'itunes': 'http://www.itunes.com/dtds/podcast-1.0.dtd',
-      'googleplay': 'http://www.google.com/schemas/play-podcasts/1.0'
+      itunes: 'http://www.itunes.com/dtds/podcast-1.0.dtd',
+      googleplay: 'http://www.google.com/schemas/play-podcasts/1.0',
     },
     custom_elements: [
-      {'googleplay:block': 'yes'},
-      {image: { url: config.podcastImageURL }},
-      {language: config.language},
-      {'itunes:image': { _attr: { href: config.podcastImageURL }}},
-      {'itunes:owner': [
-        { 'itunes:name': config.owner },
-        { 'itunes:email': config.email }
-      ]},
-      {'itunes:category': [
-        { _attr: { text: config.category }} ,
-        {'itunes:category': { _attr: { text: config.subcategory } } }
-      ]},
-      {'itunes:explicit': config.explicit },
-      {'itunes:subtitle': config.subtitle },
-      {'itunes:summary': config.summary },
-      {'itunes:author': config.author },
-      {'itunes:type': config.podcastType },
-    ] 
+      { 'googleplay:block': 'yes' },
+      { image: { url: config.podcastImageURL } },
+      { language: config.language },
+      { 'itunes:image': { _attr: { href: config.podcastImageURL } } },
+      {
+        'itunes:owner': [
+          { 'itunes:name': config.owner },
+          { 'itunes:email': config.email },
+        ],
+      },
+      {
+        'itunes:category': [
+          { _attr: { text: config.category } },
+          { 'itunes:category': { _attr: { text: config.subcategory } } },
+        ],
+      },
+      { 'itunes:explicit': config.explicit },
+      { 'itunes:subtitle': config.subtitle },
+      { 'itunes:summary': config.summary },
+      { 'itunes:author': config.author },
+      { 'itunes:type': config.podcastType },
+    ],
   };
 
   var feed = new RSS(rssFeedOpts);
 
-  Promise
-    .allSettled(entriesWithAudio.map(addToFeed))
+  Promise.allSettled(entriesWithAudio.map(addToFeed))
     .then(doConcludingWrites)
     .catch(logError);
 
@@ -124,7 +130,11 @@ function makePodcastXML(entries) {
     console.error('Doing the concluding writes.');
     console.log(feed.xml({ indent: true }));
     if (Object.keys(cachedFileInfo).length > 0) {
-      fs.writeFileSync(cachedFileInfoPath, JSON.stringify(cachedFileInfo, null, 2), { encoding: 'utf8' });
+      fs.writeFileSync(
+        cachedFileInfoPath,
+        JSON.stringify(cachedFileInfo, null, 2),
+        { encoding: 'utf8' }
+      );
     }
   }
 
@@ -132,7 +142,10 @@ function makePodcastXML(entries) {
     var duration = 0;
     var length = 0;
     try {
-      [ duration, length ] = await getDurationAndLength(config.mediaBaseURL, mediaFilename);
+      [duration, length] = await getDurationAndLength(
+        config.mediaBaseURL,
+        mediaFilename
+      );
     } catch (error) {
       logError(error);
       console.error('Caught error with getting duration of', mediaFilename);
@@ -176,7 +189,9 @@ async function getDurationAndLength(baseURL, filename) {
   try {
     var streamPipeline = promisify(pipeline);
     var res = await fetch(location);
-    if (!res.ok) { throw new Error(`Unexpected response ${res.statusText}.`); }
+    if (!res.ok) {
+      throw new Error(`Unexpected response ${res.statusText}.`);
+    }
     await streamPipeline(res.body, fs.createWriteStream(tmpPath));
     wroteFile = true;
 
@@ -194,7 +209,10 @@ async function getDurationAndLength(baseURL, filename) {
         await fileHandle.close();
         await fs.promises.unlink(tmpPath);
       } catch (error) {
-        logError(error, `[Sideshow Bob stepping on rake] Had problems cleaning up file at ${tmpPath}.`); 
+        logError(
+          error,
+          `[Sideshow Bob stepping on rake] Had problems cleaning up file at ${tmpPath}.`
+        );
       }
     }
   }
@@ -213,4 +231,3 @@ async function getDurationAndLength(baseURL, filename) {
     return buffer;
   }
 }
-
