@@ -32,7 +32,7 @@ Where your config file looks like this:
 
 There's an example in [testbed/test-config.js](testbed/test-config.js).
 
-The second param, your-file-info-cache.json, is where you want static-web-cast to both keep a cache of the info in gets from your audio files and where you want it to read from. This optional, but it will build your podcast feed much faster in which there's a lot of episodes it looked at in previous runs and only one new episode. This is because it takes a secord or so on most computers to grab the media file from the internet (this is because it doesn't assume you are building the feed from the same computer that hosts the media), then decode it and get the play duration.
+The second param, your-file-info-cache.json, is where you want static-web-cast to both keep a cache of the info in gets from your audio files and where you want it to read from. This is optional, but it will build your podcast feed much faster when there's a lot of episodes it looked at in previous runs and only one new episode. This is because it takes a secord or so on most computers to grab the media file from the internet (this is because it doesn't assume you are building the feed from the same computer that hosts the media), then decode it and get the play duration.
 
 ### Testing
 
