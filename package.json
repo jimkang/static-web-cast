@@ -27,6 +27,7 @@
     "get-at-path": "^1.0.1",
     "lodash.compact": "^3.0.1",
     "mediainfo.js": "^0.1.7",
+    "no-throw-json-parse": "^1.0.0",
     "node-fetch": "^2.6.6",
     "oknok": "^3.0.0",
     "rss": "^1.2.2"

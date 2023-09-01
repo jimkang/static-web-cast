@@ -13,6 +13,7 @@ var { pipeline } = require('stream');
 var { promisify } = require('util');
 var fetch = require('node-fetch');
 var getAtPath = require('get-at-path');
+var noThrowJSONParse = require('no-throw-json-parse');
 
 if (process.argv.length < 2) {
   console.error(
@@ -31,7 +32,8 @@ if (process.argv.length > 3) {
     cachedFileInfoPath = path.join(__dirname, cachedFileInfoPath);
   }
   if (fs.existsSync(cachedFileInfoPath)) {
-    cachedFileInfo = require(cachedFileInfoPath);
+    const fileInfoContents = fs.readFileSync(cachedFileInfoPath, { encoding: 'utf8' });
+    cachedFileInfo = noThrowJSONParse(fileInfoContents, {});
   }
 }
 
